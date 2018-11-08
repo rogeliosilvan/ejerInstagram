@@ -2,14 +2,13 @@ import axios from 'axios';
 
 class Vistagram{
 
-    constructor(){   
-        
-        console.log("En clase Vistagram");
+    constructor(){
+        this.dateFormat = new Intl.DateTimeFormat("es-ES")
+        this.getPhotos().then(photos => {
+            this.photos = photos
+            this.render()
+        })
     }
-
-    // getTeams() {
-    //     return this.teams
-    // }
 
     async getPhotos(){
         try {
@@ -21,46 +20,80 @@ class Vistagram{
         }
     }
     
-    async paintPhotos(){
-        const photos = await this.getPhotos()
-        console.log(photos)
-        let contador = 1;
-        let Printcomment="";
-        photos.map( (photo,index) => {
-            //  return photo.name
-            // console.log(photo.index);
-            console.log(photo.username);
-            console.log(photo.photoURI);
-            console.log(photo.likes);
-            console.log(photo.liked);
-            console.log(photo.date);
-            console.log(photo.comments);
-            // console.log(photo.comments[0]);
-            // console.log(photo.comments[1]);
+    render(){
+        let inyetedHtml = this.photos.map( (photo,index) => {
+            let printComment="";
             photo.comments.map( comment => {
-                console.log(comment);
-                Printcomment = Printcomment.concat(`<p>${comment}</p>`);
+                printComment = printComment.concat(`<p>${comment}</p>`);
                 // return comment;
             });
-            console.log(Printcomment);
+            printComment = printComment || 'No Comments'
             
 
-            let inyetedHtml = `<div class="foto foto${index}">
-            <div class="photoURI"><img src="${photo.photoURI}" alt=""></div> 
+            return `<div class="foto foto${index}">
+            <div class="photoURI"><img src="${photo.photoURI}" alt=""></div>
+            <button id="btnLike${index}">BOTON LIKE</button>
             <div class="username"><p>${photo.username}</p></div>
-            <div class="date"><p>${photo.date}</p></div>
+            <div class="date"><p>${this.dateFormat.format(new Date(photo.date))}</p></div>
             <div class="comments">
-            ${Printcomment}
+            ${photo.comments[0] || 'No Comments'}
+            ${this.showMoreComments(photo)}
             </div>
+            <div class="numComments">
+            ${photo.comments.length}
+            </div>
+            <button id="btnMoreComments${index}">More Comments</button>
             <div class="likes">${photo.likes}</div>
             <div class="liked">${photo.liked}</div>
-            </div>`;
-
-            document.getElementById("contentFotos").innerHTML += inyetedHtml;
-
+            </div>`
             
-        })        
-    }    
+        }).join('');
+        document.getElementById('contentFotos').innerHTML = inyetedHtml;
+        this.addListener();
+    }
+    addListener(){
+        for (let count = 0; count < this.photos.length; count++) {
+            document.getElementById(`btnLike${count}`).addEventListener("click", () => this.putLike(this.photos[count]), false);
+        }
+    }
+
+    putLike(photo){
+
+        // console.log(photo.photoURI);
+        if(!photo.liked)
+        {
+            this.incLikes(photo);
+            this.photos = this.photos.map(function(element) {
+                if(element.photoURI === photo.photoURI) element.liked = true
+                return element
+            });
+        }
+        this.render()
+    }
+
+    incLikes(photo){
+        this.photos = this.photos.map(function(element) {
+            if(element.photoURI === photo.photoURI) element.likes += 1;
+            return element
+        });
+    }
+
+    showMoreComments(photo){
+
+        console.log('showMoreComments');
+
+        let comments = this.photos.map(function(element) {
+            // console.log(element.photoURI);
+            // console.log(photo.photoURI);
+
+            if(element.photoURI === photo.photoURI)
+                return element.comments.slice(1,element.comments.length)
+        });
+        console.log(comments);
+        return comments
+
+    }
+
 
 }
 
